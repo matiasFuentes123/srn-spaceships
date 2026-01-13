@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { fetchSpaceships } from '../services/api';
 import { Spaceship } from '../types/spaceship';
+import { filterSpaceshipsByFaction } from '../utils/filterUtils';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -42,13 +43,8 @@ export default function HomeScreen() {
   };
 
   const filterSpaceships = () => {
-    if (selectedFaction === 'Todas') {
-      setFilteredSpaceships(spaceships);
-    } else {
-      setFilteredSpaceships(
-        spaceships.filter((ship) => ship.faction === selectedFaction)
-      );
-    }
+    const filtered = filterSpaceshipsByFaction(spaceships, selectedFaction);
+    setFilteredSpaceships(filtered);
   };
 
   const renderSpaceshipCard = ({ item }: { item: Spaceship }) => (
