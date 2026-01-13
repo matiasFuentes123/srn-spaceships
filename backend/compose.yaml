@@ -1,0 +1,76 @@
+# ========================================
+# Docker Compose Configuration
+# SRN Spaceships API Backend
+# ========================================
+
+services:
+  # ========================================
+  # Development Service
+  # ========================================
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: srn-spaceships-dev
+    ports:
+      - "${APP_PORT:-3000}:3000" # API server
+    environment:
+      NODE_ENV: development
+      DOCKER_ENV: "true"
+    volumes:
+      - ./src:/app/src:ro
+      - ./package.json:/app/package.json
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+          ignore:
+            - "**/*.test.*"
+            - "**/__tests__/**"
+        - action: rebuild
+          path: ./package.json
+    restart: unless-stopped
+    networks:
+      - srn-spaceships-network
+
+  # ========================================
+  # Production Service
+  # ========================================
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: srn-spaceships-prod
+    ports:
+      - "${PROD_PORT:-8080}:3000"
+    environment:
+      NODE_ENV: production
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-https://yourdomain.com}"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: "${PROD_MEMORY_LIMIT:-2G}"
+          cpus: "${PROD_CPU_LIMIT:-1.0}"
+        reservations:
+          memory: "${PROD_MEMORY_RESERVATION:-512M}"
+          cpus: "${PROD_CPU_RESERVATION:-0.25}"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - srn-spaceships-network
+    profiles:
+      - prod
+
+# Network Configuration
+# ========================================
+networks:
+  srn-spaceships-network:
+    name: srn-spaceships-network
+    driver: bridge
